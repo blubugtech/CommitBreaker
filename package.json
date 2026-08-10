@@ -1,0 +1,14 @@
+{
+  "name": "singularity-grid-breakout",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Breakout/Arkanoid mode for singularity-grid — standalone scaffold for testing before merging into the main repo.",
+  "scripts": {
+    "test-local": "tsx src/test-local.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0"
+  }
+}
