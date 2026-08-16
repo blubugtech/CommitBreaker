@@ -5,6 +5,7 @@
 **Turn your GitHub contribution graph into a retro Breakout arcade game.**
 
 [![Build](https://img.shields.io/github/actions/workflow/status/blubugtech/commitbreaker/generate.yml?style=for-the-badge)](https://github.com/blubugtech/commitbreaker/actions)
+![Release](https://img.shields.io/github/v/release/blubugtech/commitbreaker?style=for-the-badge)
 
 *Inspired by [Platane/snk](https://github.com/Platane/snk) and classic Breakout arcade games*
 
