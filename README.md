@@ -1,63 +1,79 @@
-# singularity-grid — Breakout mode (scaffold)
+<div align="center">
 
-A standalone, runnable scaffold for the Breakout/Arkanoid mode described in
-chat — built so you can test the simulation and rendering on synthetic data
-*before* wiring it into the real `singularity-grid` repo.
+# 🧱 CommitBreaker
 
-## What's here
+**Turn your GitHub contribution graph into a retro Breakout arcade game.**
 
-- `src/simulate-breakout.ts` — physics stepper (ball/paddle/bricks), plus
-  `contributionsToTierGrid()` which buckets raw contribution counts into
-  1/2/3-hit brick tiers (0 contributions = no brick).
-- `src/render-breakout-svg.ts` — SVG renderer. Same native-`<animate>`
-  approach as the CA mode: no rasterization, no per-frame duplication.
-  Bricks fade out (opacity) on the frame they break. Ball is an angular
-  "AI drone" polygon that rotates to face its direction of travel, with a
-  phase-delayed low-opacity trail copy for a thruster streak. Paddle is a
-  bar with a thin accent stripe.
-- `src/constants.ts` — grid size, timing, both palettes, and the breakout
-  physics config (ball speed, paddle speed, etc.) in one place to tune.
-- `src/test-local.ts` — generates a synthetic contribution grid (weekday
-  bias, a vacation gap, an intense streak) and renders both palettes to
-  `dist/` without needing a GitHub token.
+[![Build](https://img.shields.io/github/actions/workflow/status/blubugtech/commit-breaker/generate.yml?style=for-the-badge)](https://github.com/blubugtech/commit-breaker/actions)
 
-## Try it
+*Inspired by [Platane/snk](https://github.com/Platane/snk) and classic Breakout arcade games*
 
-```
+<br />
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/blubugtech/commit-breaker/output/commit-breaker-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/blubugtech/commit-breaker/output/commit-breaker-light.svg" />
+  <img alt="commit-breaker" src="https://raw.githubusercontent.com/blubugtech/commit-breaker/output/commit-breaker-light.svg" />
+</picture>
+
+</div>
+
+---
+
+**CommitBreaker** turns your GitHub contribution graph into a 15-second animated breakout game. 
+
+Days you didn't code stay empty, while days you did commit become bricks in a breakout level! An AI paddle plays the game, clearing out your contributions. It renders in both dark and light palettes, as both SVG (crisp, native-animated, ideal for embedding) and GIF (universally viewable). 
+
+It ships as a GitHub Action that can run on a schedule, pull your real contribution data via GitHub's API, and automatically regenerate the animation for your profile README.
+
+## 🛠️ How it works
+
+1. **`src/fetch.ts`** — Pulls your real contribution calendar via GitHub's GraphQL API (`contributionsCollection.contributionCalendar`), giving a 7-row x ~53-column grid of daily contribution counts.
+2. **`src/simulate-breakout.ts`** — Translates the grid into a breakout game with physics for the ball, paddle, and bricks. Higher-activity days become tougher bricks!
+3. **`src/render-breakout-svg.ts` / `src/render-breakout-gif.ts`** — Render the simulated frames as SVG (native per-cell `<animate>`, no rasterization) or GIF (rasterized via `sharp`, encoded via `gifenc`).
+
+## 🚀 Usage
+
+### Locally
+
+```bash
 npm install
-npm run test-local
+GITHUB_USER_NAME=yourusername GITHUB_TOKEN=ghp_xxx npm run build
 ```
 
-Outputs `dist/breakout-dark.svg` and `dist/breakout-light.svg` — open
-either directly in a browser to watch the animation play. The console also
-prints the frame the wall got cleared on, so you can tune `ballSpeed` in
-`constants.ts` until clearance lands around 13-14s of the 15s total.
+Outputs land in `dist/`:
+- `commit-breaker-dark.svg`, `commit-breaker-light.svg`
+- `commit-breaker-dark.gif`, `commit-breaker-light.gif`
 
-## Merging into the real repo
+> **Note:** `GITHUB_TOKEN` needs **no scopes at all** — contribution data is public. Generate one at [GitHub Developer Settings](https://github.com/settings/tokens) (classic token, no checkboxes needed) or a fine-grained token with no permissions.
 
-This scaffold duplicates `constants.ts` on purpose so it's self-contained.
-To merge into `singularity-grid`:
+### As a GitHub Action
 
-1. Copy `src/simulate-breakout.ts` and `src/render-breakout-svg.ts` into the
-   real `src/`.
-2. In the real `src/constants.ts`, add the `BALL_*`/`PADDLE_*`-style fields
-   from this scaffold's constants file (don't duplicate `CELL`/`GAP`/`PAD`/
-   `ANIM_FRAME_COUNT`/palettes — reuse the ones already there).
-3. Add a `mode: "cellular-automaton" | "breakout"` switch wherever the real
-   entrypoint currently calls `simulate()` / the render functions, and in
-   `action.yml`'s inputs.
-4. Write a `render-breakout-gif.ts` mirroring `render-gif.ts` (rasterize
-   each frame via `sharp`, encode via `gifenc`) if you want GIF output too
-   — the SVG renderer here doesn't cover that path.
-5. If `simulate.ts` already has an intensity-bucketing helper for the CA
-   mode's seed density, swap it in for `contributionsToTierGrid()` so tier
-   boundaries stay consistent across both modes.
+The included `.github/workflows/generate.yml` runs daily, regenerates the animation for `github.repository_owner`, and pushes the output files to an `output` branch. Enable it by pushing this repo to GitHub; it uses the automatically-provided `secrets.GITHUB_TOKEN`, no setup needed.
 
-## Tuning
+### 🎨 Dark Mode Support on GitHub
 
-- `ballSpeed` in `constants.ts` is the main knob for how long clearance
-  takes — raise it if the wall isn't clearing within 15s, lower it if it
-  clears too fast for a satisfying rally.
-- `paddleMaxSpeed` / `paddleWidth` control how "skilled" the AI paddle
-  looks — a slower max speed with a slightly wider paddle reads as more
-  dramatic near-miss saves.
+For dark mode support on github, use this [special syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#specifying-the-theme-an-image-is-shown-to) in your readme.
+
+```html
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="commit-breaker-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="commit-breaker-light.svg" />
+  <img alt="commit-breaker" src="commit-breaker-light.svg" />
+</picture>
+```
+
+## ⚙️ Tuning
+
+All timing/color and physics config lives in `src/constants.ts`:
+- `ballSpeed`, `paddleMaxSpeed`, `paddleWidth` control the breakout game dynamics.
+- `DARK_PALETTE` / `LIGHT_PALETTE` control colors.
+- `CELL`, `GAP`, `PAD` control grid sizing.
+
+## 🧪 Testing without a token
+
+`src/test-local.ts` generates a synthetic-but-realistic contribution grid so you can iterate on the simulation and renderers without hitting the GitHub API:
+
+```bash
+npx tsx src/test-local.ts
+```

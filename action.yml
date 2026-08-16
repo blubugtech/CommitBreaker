@@ -1,0 +1,35 @@
+name: "CommitBreaker"
+description: "Turns your GitHub contribution graph into a 15-second animated takeover (Conway's Game of Life)."
+author: "blubugtech"
+branding:
+  icon: "activity"
+  color: "blue"
+
+inputs:
+  github_user_name:
+    description: "GitHub username to fetch contribution graph for"
+    required: true
+  github_token:
+    description: "GitHub token (can be a standard secrets.GITHUB_TOKEN with no extra scopes)"
+    required: true
+  out_dir:
+    description: "Directory to output the generated files"
+    required: false
+    default: "dist"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci
+
+    - name: Run Animation Generator
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npx tsx src/main.ts
+      env:
+        INPUT_GITHUB_USER_NAME: ${{ inputs.github_user_name }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
+        INPUT_OUT_DIR: ${{ inputs.out_dir }}

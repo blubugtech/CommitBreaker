@@ -19,37 +19,25 @@ import {
 } from "./constants";
 import { contributionsToTierGrid, simulateBreakout } from "./simulate-breakout";
 import { renderBreakoutSVG } from "./render-breakout-svg";
+import { renderBreakoutGIF } from "./render-breakout-gif";
 
-function generateSyntheticContributions(): number[][] {
+// Generate synthetic patterns
+function generateSyntheticContributions(patternType: number): number[][] {
   const grid: number[][] = Array.from({ length: GRID_ROWS }, () =>
     new Array(GRID_COLS).fill(0)
   );
 
-  const vacationStartWeek = 20;
-  const vacationLenWeeks = 2;
-  const streakStartWeek = 35;
-  const streakLenWeeks = 3;
-
   for (let col = 0; col < GRID_COLS; col++) {
-    const onVacation =
-      col >= vacationStartWeek && col < vacationStartWeek + vacationLenWeeks;
-    const onStreak = col >= streakStartWeek && col < streakStartWeek + streakLenWeeks;
-
     for (let row = 0; row < GRID_ROWS; row++) {
-      if (onVacation) {
-        grid[row][col] = 0;
-        continue;
-      }
-      // row 0/6 = weekend, lighter activity; weekdays busier.
-      const isWeekend = row === 0 || row === 6;
-      const base = isWeekend ? 0.25 : 0.7;
-      const chance = onStreak ? 0.95 : base;
-
-      if (Math.random() < chance) {
-        const max = onStreak ? 14 : isWeekend ? 4 : 9;
-        grid[row][col] = 1 + Math.floor(Math.random() * max);
+      if (patternType === 0) {
+        // Sparse: Tests endgame hunting logic extensively
+        grid[row][col] = Math.random() < 0.08 ? (1 + Math.floor(Math.random() * 40)) : 0;
+      } else if (patternType === 1) {
+        // Checkerboard: Tests piercing and bouncing through tight gaps
+        grid[row][col] = ((row + col) % 2 === 0) ? (1 + Math.floor(Math.random() * 40)) : 0;
       } else {
-        grid[row][col] = 0;
+        // Dense: Tests high speed performance and large brick clusters
+        grid[row][col] = Math.random() < 0.9 ? (1 + Math.floor(Math.random() * 40)) : 0;
       }
     }
   }
@@ -57,29 +45,40 @@ function generateSyntheticContributions(): number[][] {
   return grid;
 }
 
-function build() {
-  mkdirSync("dist", { recursive: true });
+async function build() {
+  const patterns = ['sparse', 'checkerboard', 'dense'];
+  
+  for (let p = 0; p < patterns.length; p++) {
+    const patternName = patterns[p];
+    console.log(`\n--- Generating pattern: ${patternName} ---`);
+    const contributions = generateSyntheticContributions(p);
+    const tierGrid = contributionsToTierGrid(contributions);
+    const frames = simulateBreakout(tierGrid, BREAKOUT_CONFIG);
 
-  const contributions = generateSyntheticContributions();
-  const tierGrid = contributionsToTierGrid(contributions);
-  const frames = simulateBreakout(tierGrid, BREAKOUT_CONFIG);
+    const clearedAt = frames.findIndex((f) => f.bricksRemaining === 0);
+    const totalSec   = (frames.length * BREAKOUT_CONFIG.frameMs / 1000).toFixed(1);
+    console.log(`Frames: ${frames.length} → animation duration: ${totalSec}s`);
+    console.log(
+      clearedAt === -1
+        ? `⚠ Safety cap hit — not all bricks cleared`
+        : `✓ All bricks cleared at frame ${clearedAt} (~${((clearedAt * BREAKOUT_CONFIG.frameMs) / 1000).toFixed(1)}s)`
+    );
 
-  const darkSVG = renderBreakoutSVG(frames, tierGrid, BREAKOUT_CONFIG, DARK_PALETTE);
-  const lightSVG = renderBreakoutSVG(frames, tierGrid, BREAKOUT_CONFIG, LIGHT_PALETTE);
+    const outDir = `dist/${patternName}`;
+    mkdirSync(outDir, { recursive: true });
 
-  writeFileSync("dist/breakout-dark.svg", darkSVG);
-  writeFileSync("dist/breakout-light.svg", lightSVG);
+    // Render Light
+    const lightSVG = renderBreakoutSVG(frames, tierGrid, BREAKOUT_CONFIG, LIGHT_PALETTE);
+    writeFileSync(`${outDir}/breakout-light.svg`, lightSVG);
+    console.log(`Rendering ${patternName} light GIF...`);
+    await renderBreakoutGIF(frames, tierGrid, BREAKOUT_CONFIG, LIGHT_PALETTE, `${outDir}/breakout-light.gif`);
 
-  const clearedAt = frames.findIndex((f) => f.bricksRemaining === 0);
-  console.log(`Frames: ${frames.length}`);
-  console.log(
-    clearedAt === -1
-      ? "Wall not fully cleared within frame budget — lower ballSpeed's effective difficulty or raise ballSpeed in constants.ts."
-      : `Wall cleared at frame ${clearedAt} (~${((clearedAt * BREAKOUT_CONFIG.frameMs) / 1000).toFixed(
-          1
-        )}s)`
-  );
-  console.log("Wrote dist/breakout-dark.svg and dist/breakout-light.svg");
+    // Render Dark
+    const darkSVG = renderBreakoutSVG(frames, tierGrid, BREAKOUT_CONFIG, DARK_PALETTE);
+    writeFileSync(`${outDir}/breakout-dark.svg`, darkSVG);
+    console.log(`Rendering ${patternName} dark GIF...`);
+    await renderBreakoutGIF(frames, tierGrid, BREAKOUT_CONFIG, DARK_PALETTE, `${outDir}/breakout-dark.gif`);
+  }
 }
 
-build();
+build().catch(console.error);

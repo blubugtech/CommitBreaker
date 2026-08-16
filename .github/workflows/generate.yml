@@ -1,0 +1,33 @@
+name: generate commit-breaker contribution animation
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # daily at 00:00 UTC
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+
+      - name: generate animation
+        uses: ./
+        with:
+          github_user_name: amankrmj09
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          out_dir: dist
+
+      - name: push output to output branch
+        uses: crazy-max/ghaction-github-pages@v5
+        with:
+          target_branch: output
+          build_dir: dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,14 +1,24 @@
 {
-  "name": "singularity-grid-breakout",
-  "version": "0.1.0",
+  "name": "commit-breaker",
+  "version": "1.0.0",
+  "description": "Turns a GitHub contribution graph into a Conway's-Game-of-Life AI virus takeover animation (SVG + GIF, dark + light).",
+  "type": "module",
   "private": true,
-  "description": "Breakout/Arkanoid mode for singularity-grid — standalone scaffold for testing before merging into the main repo.",
   "scripts": {
-    "test-local": "tsx src/test-local.ts"
+    "build": "ncc build src/main.ts -o action",
+    "test:local": "tsx src/test-local.ts"
+  },
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1",
+    "@octokit/graphql": "^8.1.1",
+    "gifenc": "^1.0.3",
+    "sharp": "^0.33.5"
   },
   "devDependencies": {
-    "tsx": "^4.7.0",
-    "typescript": "^5.4.0",
-    "@types/node": "^20.11.0"
+    "@types/node": "^22.9.0",
+    "@vercel/ncc": "^0.44.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
   }
 }
