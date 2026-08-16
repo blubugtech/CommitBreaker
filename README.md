@@ -11,9 +11,9 @@
 <br />
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/blubugtech/commit-breaker/output/commit-breaker-dark.svg" />
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/blubugtech/commit-breaker/output/commit-breaker-light.svg" />
-  <img alt="commit-breaker" src="https://raw.githubusercontent.com/blubugtech/commit-breaker/output/commit-breaker-light.svg" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/blubugtech/CommitBreaker/output/breakout-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/blubugtech/CommitBreaker/output/breakout-light.svg" />
+  <img alt="commit-breaker" src="https://raw.githubusercontent.com/blubugtech/CommitBreaker/output/breakout-light.svg" />
 </picture>
 
 </div>
@@ -42,26 +42,78 @@ GITHUB_USER_NAME=yourusername GITHUB_TOKEN=ghp_xxx npm run build
 ```
 
 Outputs land in `dist/`:
-- `commit-breaker-dark.svg`, `commit-breaker-light.svg`
-- `commit-breaker-dark.gif`, `commit-breaker-light.gif`
+- `breakout-light.svg`, `commit-breaker-light.svg`
+- `breakout-light.gif`, `commit-breaker-light.gif`
 
 > **Note:** `GITHUB_TOKEN` needs **no scopes at all** — contribution data is public. Generate one at [GitHub Developer Settings](https://github.com/settings/tokens) (classic token, no checkboxes needed) or a fine-grained token with no permissions.
 
 ### As a GitHub Action
 
-The included `.github/workflows/generate.yml` runs daily, regenerates the animation for `github.repository_owner`, and pushes the output files to an `output` branch. Enable it by pushing this repo to GitHub; it uses the automatically-provided `secrets.GITHUB_TOKEN`, no setup needed.
+Create the following file in your profile repository:
+
+```text
+.github/workflows/generate.yml
+```
+
+Add:
+
+```yaml
+name: Generate Commit Breaker
+
+on:
+  schedule:
+    # Runs at midnight every day
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      
+      - name: Generate Commit Breaker
+        uses: blubugtech/commitbreaker@v2.0.0.1
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          out_dir: dist
+          
+      - name: Push to output branch
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: output
+          build_dir: dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+The workflow runs automatically every day at midnight using:
+
+```yaml
+- cron: "0 0 * * *"
+```
+
+It also supports manual execution through `workflow_dispatch` and runs when changes are pushed to the `main` branch.
 
 ### 🎨 Dark Mode Support on GitHub
 
-For dark mode support on github, use this [special syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#specifying-the-theme-an-image-is-shown-to) in your readme.
+For dark mode support on GitHub, use this [special syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-and-formatting-on-github/basic-writing-and-formatting-syntax#specifying-the-theme-an-image-is-shown-to) in your README.
 
 ```html
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="commit-breaker-dark.svg" />
-  <source media="(prefers-color-scheme: light)" srcset="commit-breaker-light.svg" />
-  <img alt="commit-breaker" src="commit-breaker-light.svg" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/<USERNAME>/<USERNAME>/output/breakout-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/<USERNAME>/<USERNAME>/output/breakout-light.svg" />
+  <img alt="conways-game-of-life" src="https://raw.githubusercontent.com/<USERNAME>/<USERNAME>/output/breakout-light.svg" />
 </picture>
 ```
+
 
 ## ⚙️ Tuning
 
