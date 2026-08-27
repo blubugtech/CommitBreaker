@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "ncc build src/main.ts -o action",
+    "build": "ncc build src/main.ts -o dist",
     "test:local": "tsx src/test-local.ts"
   },
   "dependencies": {
